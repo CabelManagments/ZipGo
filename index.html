@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIP.Го — хостинг через Netlify</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Monaco Editor -->
+    <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/editor/editor.main.min.css">
+    <style>
+        /* ========== СТИЛИ (те же, что были) ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .top-bar {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo i {
+            color: #667eea;
+        }
+
+        .project-badge {
+            background: #21262d;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .project-badge i {
+            color: #8b949e;
+            font-size: 0.8rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #e6edf3;
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #30363d;
+            border-color: #3c444d;
+        }
+
+        .btn-primary {
+            background: #238636;
+            border-color: #2ea043;
+        }
+
+        .btn-primary:hover {
+            background: #2ea043;
+        }
+
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .file-panel {
+            width: 260px;
+            background: #0d1117;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #30363d;
+            font-weight: 600;
+            color: #8b949e;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header i {
+            font-size: 0.9rem;
+        }
+
+        .file-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .file-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #e6edf3;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+            transition: all 0.2s;
+        }
+
+        .file-item:hover {
+            background: #21262d;
+        }
+
+        .file-item.active {
+            background: #1f6feb;
+        }
+
+        .file-item i {
+            width: 18px;
+            color: #8b949e;
+        }
+
+        .file-item.active i {
+            color: #fff;
+        }
+
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+        }
+
+        .editor-header {
+            background: #252526;
+            border-bottom: 1px solid #3e3e42;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-tab {
+            background: #2d2d30;
+            color: #969696;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-tab i {
+            font-size: 0.8rem;
+        }
+
+        .file-tab.active {
+            background: #1e1e1e;
+            color: #fff;
+        }
+
+        #editor-container {
+            flex: 1;
+            height: 100%;
+            width: 100%;
+        }
+
+        .preview-panel {
+            width: 400px;
+            background: #0d1117;
+            border-left: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-area {
+            flex: 1;
+            background: white;
+            min-height: 250px;
+        }
+
+        #preview-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        .terminal-panel {
+            height: 200px;
+            border-top: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-header {
+            padding: 8px 16px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-header span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #8b949e;
+            font-size: 0.9rem;
+        }
+
+        .terminal-content {
+            flex: 1;
+            background: #0d1117;
+            padding: 12px;
+            overflow-y: auto;
+            font-family: 'Menlo', 'Monaco', monospace;
+            font-size: 0.85rem;
+            color: #e6edf3;
+        }
+
+        .log-line {
+            margin-bottom: 4px;
+            padding: 4px 8px;
+            border-bottom: 1px solid #21262d;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .log-error {
+            color: #f85149;
+            border-left: 2px solid #f85149;
+        }
+
+        .log-warn {
+            color: #d29922;
+            border-left: 2px solid #d29922;
+        }
+
+        .log-success {
+            color: #3fb950;
+            border-left: 2px solid #3fb950;
+        }
+
+        .clear-btn {
+            background: none;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .clear-btn:hover {
+            background: #21262d;
+            color: #e6edf3;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            min-width: 320px;
+        }
+
+        .loading-card i {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #30363d;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #238636;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 10000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification i {
+            font-size: 1.2rem;
+        }
+
+        .notification.error {
+            background: #da3633;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Верхняя панель -->
+        <div class="top-bar">
+            <div class="logo">
+                <i class="fas fa-cube"></i>
+                ZIP.Го (Netlify)
+            </div>
+            
+            <div class="project-badge" id="projectBadge">
+                <i class="fas fa-folder-open"></i>
+                <span id="projectName">Нет проекта</span>
+            </div>
+
+            <div class="actions">
+                <button class="btn" id="newProjectBtn" title="Загрузить новый ZIP">
+                    <i class="fas fa-upload"></i>
+                    Загрузить
+                </button>
+                <button class="btn" id="saveBtn" title="Сохранить локально">
+                    <i class="fas fa-save"></i>
+                    Сохранить
+                </button>
+                <button class="btn btn-primary" id="publishBtn" title="Опубликовать на Netlify">
+                    <i class="fas fa-globe"></i>
+                    Опубликовать
+                </button>
+            </div>
+        </div>
+
+        <!-- Рабочая область -->
+        <div class="workspace">
+            <!-- Файлы -->
+            <div class="file-panel">
+                <div class="panel-header">
+                    <i class="fas fa-files"></i>
+                    Файлы проекта
+                </div>
+                <div class="file-tree" id="fileTree">
+                    <div class="file-item">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Загрузи ZIP чтобы начать</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Редактор -->
+            <div class="editor-panel">
+                <div class="editor-header">
+                    <div class="file-tab active" id="currentFileTab">
+                        <i class="fas fa-file-code"></i>
+                        <span id="currentFileName">index.html</span>
+                    </div>
+                </div>
+                <div id="editor-container"></div>
+            </div>
+
+            <!-- Превью и терминал -->
+            <div class="preview-panel">
+                <div class="preview-area">
+                    <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals" title="preview"></iframe>
+                </div>
+                <div class="terminal-panel">
+                    <div class="terminal-header">
+                        <span>
+                            <i class="fas fa-terminal"></i>
+                            Консоль
+                        </span>
+                        <button class="clear-btn" onclick="clearTerminal()">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                    </div>
+                    <div class="terminal-content" id="terminal"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Загрузка -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="loading-card">
+            <div class="spinner"></div>
+            <div id="loadingMessage">Загрузка...</div>
+        </div>
+    </div>
+
+    <!-- Уведомление -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationMessage"></span>
+    </div>
+
+    <!-- Библиотеки -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
+
+    <script>
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        const { get, set, keys, del } = idbKeyval;
+        let currentProject = null;
+        let currentFile = 'index.html';
+        let editor = null;
+        let originalConsole = { ...window.console };
+
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const fileTree = document.getElementById('fileTree');
+        const terminal = document.getElementById('terminal');
+        const projectNameSpan = document.getElementById('projectName');
+        const previewFrame = document.getElementById('preview-frame');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+
+        // ==================== УВЕДОМЛЕНИЯ ====================
+        function showNotification(message, isError = false) {
+            notificationMessage.textContent = message;
+            notification.className = 'notification' + (isError ? ' error' : '');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // ==================== ТЕРМИНАЛ ====================
+        function logToTerminal(type, args) {
+            const line = document.createElement('div');
+            line.className = `log-line log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            const message = Array.from(args).map(arg => {
+                if (typeof arg === 'object') {
+                    try {
+                        return JSON.stringify(arg, null, 2);
+                    } catch {
+                        return String(arg);
+                    }
+                }
+                return String(arg);
+            }).join(' ');
+            line.textContent = `[${timestamp}] ${message}`;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        window.console.log = function(...args) {
+            originalConsole.log(...args);
+            logToTerminal('log', args);
+        };
+        window.console.error = function(...args) {
+            originalConsole.error(...args);
+            logToTerminal('error', args);
+        };
+        window.console.warn = function(...args) {
+            originalConsole.warn(...args);
+            logToTerminal('warn', args);
+        };
+        window.clearTerminal = function() {
+            terminal.innerHTML = '';
+        };
+
+        // ==================== РЕДАКТОР ====================
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' } });
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: '// Загрузи проект, чтобы начать',
+                language: 'html',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: { enabled: false }
+            });
+
+            editor.onDidChangeModelContent(() => {
+                if (currentProject && currentFile && currentProject.files) {
+                    currentProject.files[currentFile] = editor.getValue();
+                    if (currentFile === 'index.html') {
+                        updatePreview(editor.getValue());
+                    }
+                }
+            });
+        });
+
+        // ==================== ПРЕВЬЮ ====================
+        function updatePreview(html) {
+            if (!html) return;
+            const interceptedHtml = html.replace('</body>', `
+                <script>
+                    (function() {
+                        const originalConsole = { ...window.console };
+                        window.console.log = function(...args) {
+                            originalConsole.log(...args);
+                            window.parent.postMessage({ type: 'console', method: 'log', args: args.map(a => String(a)) }, '*');
+                        };
+                        window.console.error = function(...args) {
+                            originalConsole.error(...args);
+                            window.parent.postMessage({ type: 'console', method: 'error', args: args.map(a => String(a)) }, '*');
+                        };
+                        window.onerror = function(msg, url, line) {
+                            window.parent.postMessage({ type: 'console', method: 'error', args: [msg + ' (line ' + line + ')'] }, '*');
+                        };
+                    })();
+                <\/script>
+            </body>`);
+            previewFrame.srcdoc = interceptedHtml;
+        }
+
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'console') {
+                logToTerminal(event.data.method, event.data.args);
+            }
+        });
+
+        // ==================== РАБОТА С ФАЙЛАМИ ====================
+        function renderFileTree(files) {
+            if (!files || Object.keys(files).length === 0) {
+                fileTree.innerHTML = '<div class="file-item"><i class="fas fa-folder-open"></i><span>Нет файлов</span></div>';
+                return;
+            }
+            const fileList = Object.keys(files).sort();
+            let html = '';
+            fileList.forEach(path => {
+                const icon = getFileIcon(path);
+                const isActive = path === currentFile ? 'active' : '';
+                html += `<div class="file-item ${isActive}" onclick="openFile('${path.replace(/'/g, "\\'")}')"><i class="fas ${icon}"></i><span>${path}</span></div>`;
+            });
+            fileTree.innerHTML = html;
+        }
+
+        function getFileIcon(filename) {
+            if (filename.endsWith('.html')) return 'fa-file-code';
+            if (filename.endsWith('.css')) return 'fa-file-code';
+            if (filename.endsWith('.js')) return 'fa-file-code';
+            if (filename.endsWith('.json')) return 'fa-file-code';
+            return 'fa-file';
+        }
+
+        window.openFile = function(path) {
+            if (!currentProject?.files?.[path]) return;
+            currentFile = path;
+            const content = currentProject.files[path];
+            let language = 'plaintext';
+            if (path.endsWith('.html')) language = 'html';
+            else if (path.endsWith('.css')) language = 'css';
+            else if (path.endsWith('.js')) language = 'javascript';
+            else if (path.endsWith('.json')) language = 'json';
+            editor.setValue(content);
+            monaco.editor.setModelLanguage(editor.getModel(), language);
+            document.getElementById('currentFileName').textContent = path;
+            renderFileTree(currentProject.files);
+        };
+
+        // ==================== ЗАГРУЗКА ZIP ====================
+        async function handleZipUpload(file) {
+            showLoading('Распаковываем архив...');
+            try {
+                const zip = new JSZip();
+                const contents = await zip.loadAsync(file);
+                const files = {};
+                const promises = [];
+                contents.forEach((relativePath, zipEntry) => {
+                    if (!zipEntry.dir) {
+                        promises.push(
+                            zipEntry.async('string').then(content => {
+                                files[relativePath] = content;
+                            })
+                        );
+                    }
+                });
+                await Promise.all(promises);
+                if (!files['index.html']) {
+                    throw new Error('В архиве нет index.html');
+                }
+                const projectId = 'project-' + Date.now();
+                const projectName = file.name.replace('.zip', '');
+                const project = {
+                    id: projectId,
+                    name: projectName,
+                    date: new Date().toISOString(),
+                    files: files
+                };
+                await set(projectId, project);
+                window.location.hash = projectId;
+                await loadProject(projectId);
+                showNotification('✅ Проект загружен локально');
+            } catch (error) {
+                showNotification('❌ ' + error.message, true);
+            }
+            hideLoading();
+        }
+
+        async function loadProject(projectId) {
+            showLoading('Загружаем проект...');
+            const project = await get(projectId);
+            if (!project) {
+                hideLoading();
+                showNotification('❌ Проект не найден', true);
+                return;
+            }
+            currentProject = project;
+            projectNameSpan.textContent = project.name || 'Без названия';
+            renderFileTree(project.files);
+            if (project.files['index.html']) {
+                openFile('index.html');
+                updatePreview(project.files['index.html']);
+            }
+            hideLoading();
+        }
+
+        // ==================== ПУБЛИКАЦИЯ В NETLIFY ====================
+        async function publishToNetlify() {
+    if (!currentProject) {
+        showNotification('❌ Нет проекта', true);
+        return;
+    }
+
+    showLoading('Публикуем...');
+
+    try {
+        const zip = new JSZip();
+        for (const [path, content] of Object.entries(currentProject.files)) {
+            zip.file(path, content);
+        }
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+        const response = await fetch('/api/deploy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/octet-stream' },
+            body: zipBlob
+        });
+
+        const text = await response.text(); // сначала как текст
+        alert('Ответ сервера (текст):\n' + text);
+        
+        try {
+            const data = JSON.parse(text);
+            alert('JSON:\n' + JSON.stringify(data, null, 2));
+        } catch (e) {
+            alert('Это не JSON, а:\n' + text);
+        }
+
+    } catch (error) {
+        showNotification('❌ ' + error.message, true);
+        console.error(error);
+    }
+
+    hideLoading();
+}
+
+        // ==================== УТИЛИТЫ ====================
+        function showLoading(msg) {
+            loadingMessage.textContent = msg;
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        // ==================== СОБЫТИЯ ====================
+        document.getElementById('newProjectBtn').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.zip';
+            input.onchange = (e) => {
+                if (e.target.files[0]) handleZipUpload(e.target.files[0]);
+            };
+            input.click();
+        });
+
+        document.getElementById('saveBtn').addEventListener('click', async () => {
+            if (!currentProject) return;
+            showLoading('Сохраняем...');
+            await set(currentProject.id, currentProject);
+            hideLoading();
+            showNotification('✅ Проект сохранён');
+        });
+
+        document.getElementById('publishBtn').addEventListener('click', publishToNetlify);
+
+        // Drag & Drop
+        document.body.addEventListener('dragover', (e) => e.preventDefault());
+        document.body.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files[0]) {
+                handleZipUpload(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Инициализация
+        async function init() {
+            const hash = window.location.hash.slice(1);
+            if (hash && hash.startsWith('project-')) {
+                await loadProject(hash);
+            } else {
+                fileTree.innerHTML = `
+                    <div class="file-item" onclick="document.getElementById('newProjectBtn').click()">
+                        <i class="fas fa-upload"></i>
+                        <span>Нажми чтобы загрузить ZIP</span>
+                    </div>
+                    <div class="file-item">
+                        <i class="fas fa-arrow-down"></i>
+                        <span>Или перетащи файл</span>
+                    </div>
+                `;
+            }
+        }
+
+        init();
+
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.slice(1);
+            if (hash && hash.startsWith('project-')) {
+                loadProject(hash);
+            }
+        });
+    </script>
+</body>
+</html>
